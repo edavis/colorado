@@ -115,6 +115,7 @@ func (r *River) ProcessFeed(result FetchResult) {
 		LastUpdate:  nowGMT(),
 	}
 
+	// Loop through items in reverse so most recent gets higher ID
 	for i := len(feed.Items) - 1; i >= 0; i-- {
 		item := feed.Items[i]
 		fingerprint := generateFingerprint(feedUrl, item)
