@@ -32,7 +32,7 @@ func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 
-	fmt.Fprint(w, "onGetRiverStream(")
+	fmt.Fprintf(w, "%s(", callbackName)
 	enc.Encode(js)
 	fmt.Fprint(w, ")")
 }
