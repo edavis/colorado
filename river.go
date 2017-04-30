@@ -97,7 +97,7 @@ func (r *River) ProcessFeed(result FetchResult) {
 	}
 
 	feedUpdate := UpdatedFeed{
-		Title:       feed.Title,
+		Title:       makePlainText(feed.Title),
 		Website:     feed.Link,
 		URL:         feedUrl,
 		Description: feed.Description,
@@ -119,7 +119,7 @@ func (r *River) ProcessFeed(result FetchResult) {
 
 		r.IncrementCounter()
 		itemUpdate := UpdatedFeedItem{
-			Title:     item.Title,
+			Title:     makePlainText(item.Title),
 			Link:      item.Link,
 			PermaLink: item.GUID,
 			PubDate:   sanitizeDate(item.Published),

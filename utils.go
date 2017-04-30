@@ -1,6 +1,9 @@
 package main
 
-import "time"
+import (
+	"github.com/microcosm-cc/bluemonday"
+	"time"
+)
 
 func nowGMT() string {
 	return time.Now().UTC().Format(utcTimestampFmt)
@@ -39,4 +42,9 @@ func sanitizeDate(date string) string {
 	}
 
 	return time.Now().UTC().Format(utcTimestampFmt)
+}
+
+func makePlainText(s string) string {
+	p := bluemonday.StrictPolicy()
+	return p.Sanitize(s)
 }
