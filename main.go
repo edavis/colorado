@@ -133,7 +133,7 @@ func (r *River) ProcessFeed(result FetchResult) {
 			Title:     item.Title,
 			Link:      item.Link,
 			PermaLink: item.GUID,
-			PubDate:   item.Published,
+			PubDate:   sanitizeDate(item.Published),
 			Id:        fmt.Sprintf("%d", r.GetCounter()),
 		}
 		feed_update.Items = append([]*UpdatedFeedItem{&item_update}, feed_update.Items...)
