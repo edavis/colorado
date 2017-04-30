@@ -119,7 +119,7 @@ func (r *River) ProcessFeed(result FetchResult) {
 		item := feed.Items[i]
 		fingerprint := generateFingerprint(feedUrl, item)
 
-		if _, ok := r.Seen[fingerprint]; ok {
+		if _, seen := r.Seen[fingerprint]; seen {
 			continue
 		} else {
 			r.Printf("adding %q\n", fingerprint)
