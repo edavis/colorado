@@ -9,12 +9,9 @@ import (
 // RiverJS is the root JSON returned by /river.
 type RiverJS struct {
 	Metadata     map[string]string `json:"metadata"`
-	UpdatedFeeds UpdatedFeeds      `json:"updatedFeeds"`
-}
-
-// UpdatedFeeds is the container that stores the updates.
-type UpdatedFeeds struct {
-	UpdatedFeed []*UpdatedFeed `json:"updatedFeed"`
+	UpdatedFeeds struct {
+		UpdatedFeed []*UpdatedFeed `json:"updatedFeed"`
+	} `json:"updatedFeeds"`
 }
 
 // UpdatedFeed contains the feed that had updates.
@@ -37,12 +34,18 @@ type UpdatedFeedItem struct {
 	Id        string `json:"id"`
 }
 
+type RiverContainer struct {
+	Rivers map[string]*River
+}
+
 // River holds the main app logic.
 type River struct {
+	Name             string
 	FetchResults     chan FetchResult
 	Streams          []string
 	Updates          []*UpdatedFeed
 	Seen             map[string]bool
+	builds           uint64
 	counter          uint64 // Item id counter
 	whenStartedGMT   string // Track startup times
 	whenStartedLocal string

@@ -1,0 +1,28 @@
+[[river]]
+name = "golang"
+feeds = [
+  "http://blog.golang.org/feed.atom",
+  "http://blog.gopheracademy.com/index.xml",
+  "http://dave.cheney.net/feed",
+  "http://elithrar.github.io/atom.xml",
+  "https://hnrss.org/newest?q=golang&description=0",
+  "http://research.swtch.com/feed.atom",
+  "https://groups.google.com/forum/feed/golang-announce/topics/rss.xml?num=15",
+  "https://groups.google.com/forum/feed/golang-dev/topics/rss.xml?num=15",
+  "https://groups.google.com/forum/feed/golang-nuts/topics/rss.xml?num=15",
+]
+
+[[river]]
+name = "news"
+feeds = [
+  "http://blogs.wsj.com/washwire/feed/",
+  "http://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
+  "http://feeds.washingtonpost.com/rss/national",
+  "http://news.yahoo.com/rss/",
+  "http://rss.cnn.com/rss/cnn_topstories.rss",
+  "http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+  "http://www.bloomberg.com/politics/feeds/site.xml",
+  "http://www.buzzfeed.com/usnews.xml",
+  "http://www.msnbc.com/feeds/latest",
+  "http://www.theguardian.com/us/rss",
+]
