@@ -139,6 +139,6 @@ func (r *River) ProcessFeed(result FetchResult) {
 
 	if newItems > 0 {
 		r.Updates = append([]*UpdatedFeed{&feedUpdate}, r.Updates...)
-		r.Printf("added %d new item(s) from %s to river (counter = %d)\n", newItems, feed.Title, r.GetCounter())
+		r.Printf("added %d new item(s) from %q to river (counter = %d)\n", newItems, feed.Title, r.GetCounter())
 	}
 }
