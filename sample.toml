@@ -22,7 +22,6 @@ feeds = [
   "http://blogs.wsj.com/washwire/feed/",
   "http://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
   "http://feeds.washingtonpost.com/rss/national",
-  "http://news.yahoo.com/rss/",
   "http://rss.cnn.com/rss/cnn_topstories.rss",
   "http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
   "http://www.bloomberg.com/politics/feeds/site.xml",
