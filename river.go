@@ -10,11 +10,12 @@ import (
 	"time"
 )
 
-func NewRiver(name string, feeds []string) *River {
+func NewRiver(name string, feeds []string, updateInterval string) *River {
 	r := River{
 		Name:             name,
 		FetchResults:     make(chan FetchResult),
 		Seen:             make(map[string]bool),
+		UpdateInterval:   updateInterval,
 		whenStartedGMT:   nowGMT(),
 		whenStartedLocal: nowLocal(),
 		buffer:           new(bytes.Buffer),
@@ -30,8 +31,14 @@ func (r *River) Run() {
 	r.Print("updating feeds (initial fetch)")
 	r.UpdateFeeds()
 
-	// ticker := time.NewTicker(15 * time.Minute)
-	ticker := time.NewTicker(5 * time.Minute)
+	duration, err := time.ParseDuration(r.UpdateInterval)
+	if err != nil {
+		fmt.Printf("the duration %q is invalid, using default of 15 minutes\n", r.UpdateInterval)
+		duration = 15 * time.Minute
+	}
+	r.Printf("fetching feeds every %s\n", duration)
+	ticker := time.NewTicker(duration)
+
 	for {
 		select {
 		case result := <-r.FetchResults:

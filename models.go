@@ -45,6 +45,7 @@ type River struct {
 	Streams          []string
 	Updates          []*UpdatedFeed
 	Seen             map[string]bool
+	UpdateInterval   string
 	builds           uint64
 	counter          uint64 // Item id counter
 	whenStartedGMT   string // Track startup times

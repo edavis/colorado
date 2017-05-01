@@ -10,9 +10,6 @@ func main() {
 
 	fmt.Println("starting up...")
 
-	rc := NewRiverContainer()
-	for _, river := range config.River {
-		rc.Add(river.Name, river.Feeds)
-	}
+	rc := NewRiverContainer(config)
 	rc.Run()
 }

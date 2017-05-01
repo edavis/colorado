@@ -12,9 +12,13 @@ const (
 )
 
 type Config struct {
+	Settings struct {
+		Update string
+	}
 	River []struct {
-		Name  string
-		Feeds []string
+		Name   string
+		Feeds  []string
+		Update string
 	}
 }
 

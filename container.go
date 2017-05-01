@@ -6,14 +6,27 @@ import (
 	"net/http"
 )
 
-func NewRiverContainer() *RiverContainer {
-	return &RiverContainer{
+func NewRiverContainer(config *Config) *RiverContainer {
+	rc := RiverContainer{
 		Rivers: make(map[string]*River),
 	}
-}
 
-func (rc *RiverContainer) Add(name string, feeds []string) {
-	rc.Rivers[name] = NewRiver(name, feeds)
+	for _, obj := range config.River {
+		var interval string
+
+		switch {
+		case obj.Update != "":
+			interval = obj.Update
+		case config.Settings.Update != "":
+			interval = config.Settings.Update
+		default:
+			interval = "15m"
+		}
+
+		rc.Rivers[obj.Name] = NewRiver(obj.Name, obj.Feeds, interval)
+	}
+
+	return &rc
 }
 
 func (rc *RiverContainer) Run() {

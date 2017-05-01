@@ -1,3 +1,6 @@
+[settings]
+update = "30m"
+
 [[river]]
 name = "golang"
 feeds = [
@@ -11,6 +14,7 @@ feeds = [
   "https://groups.google.com/forum/feed/golang-dev/topics/rss.xml?num=15",
   "https://groups.google.com/forum/feed/golang-nuts/topics/rss.xml?num=15",
 ]
+update = "60m"
 
 [[river]]
 name = "news"
@@ -26,3 +30,4 @@ feeds = [
   "http://www.msnbc.com/feeds/latest",
   "http://www.theguardian.com/us/rss",
 ]
+update = "15m"
