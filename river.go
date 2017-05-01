@@ -15,12 +15,19 @@ func NewRiver(name string, feeds []string, updateInterval string) *River {
 		Name:             name,
 		FetchResults:     make(chan FetchResult),
 		Seen:             make(map[string]bool),
-		UpdateInterval:   updateInterval,
 		whenStartedGMT:   nowGMT(),
 		whenStartedLocal: nowLocal(),
 		buffer:           new(bytes.Buffer),
 	}
 	r.Logger = log.New(r.buffer, "", log.LstdFlags|log.Lmicroseconds)
+
+	duration, err := time.ParseDuration(updateInterval)
+	if err != nil {
+		fmt.Printf("the duration %q is invalid, using default of 15 minutes\n", updateInterval)
+		duration = 15 * time.Minute
+	}
+	r.UpdateInterval = duration
+
 	for _, feed := range feeds {
 		r.Streams = append(r.Streams, feed)
 	}
@@ -31,13 +38,8 @@ func (r *River) Run() {
 	r.Print("updating feeds (initial fetch)")
 	r.UpdateFeeds()
 
-	duration, err := time.ParseDuration(r.UpdateInterval)
-	if err != nil {
-		fmt.Printf("the duration %q is invalid, using default of 15 minutes\n", r.UpdateInterval)
-		duration = 15 * time.Minute
-	}
-	r.Printf("fetching feeds every %s\n", duration)
-	ticker := time.NewTicker(duration)
+	r.Printf("fetching feeds every %s\n", r.UpdateInterval)
+	ticker := time.NewTicker(r.UpdateInterval)
 
 	for {
 		select {

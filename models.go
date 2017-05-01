@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/mmcdole/gofeed"
 	"log"
+	"time"
 )
 
 // RiverJS is the root JSON returned by /river.
@@ -45,7 +46,7 @@ type River struct {
 	Streams          []string
 	Updates          []*UpdatedFeed
 	Seen             map[string]bool
-	UpdateInterval   string
+	UpdateInterval   time.Duration
 	builds           uint64
 	counter          uint64 // Item id counter
 	whenStartedGMT   string // Track startup times
