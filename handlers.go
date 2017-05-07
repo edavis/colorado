@@ -8,6 +8,8 @@ import (
 )
 
 func (r *River) serveLog(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
 	var buffer bytes.Buffer
 	for _, message := range r.Messages {
 		fmt.Fprintf(&buffer, message)
@@ -16,6 +18,8 @@ func (r *River) serveLog(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 	js := RiverJS{
 		Metadata: map[string]string{
 			"name":             r.Name,
@@ -33,7 +37,6 @@ func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
 		},
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
 	enc.SetIndent("  ", "  ")
 	enc.SetEscapeHTML(false)
