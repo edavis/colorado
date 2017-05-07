@@ -27,8 +27,10 @@ func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
 			"whenStartedGMT":   r.whenStartedGMT,
 			"whenStartedLocal": r.whenStartedLocal,
 		},
+		UpdatedFeeds: map[string][]*UpdatedFeed{
+			"updatedFeed": r.Updates,
+		},
 	}
-	js.UpdatedFeeds.UpdatedFeed = r.Updates
 
 	w.Header().Set("Content-Type", "application/json")
 	enc := json.NewEncoder(w)

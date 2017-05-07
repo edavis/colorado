@@ -9,10 +9,8 @@ import (
 
 // RiverJS is the root JSON returned by /river.
 type RiverJS struct {
-	Metadata     map[string]string `json:"metadata"`
-	UpdatedFeeds struct {
-		UpdatedFeed []*UpdatedFeed `json:"updatedFeed"`
-	} `json:"updatedFeeds"`
+	Metadata     map[string]string         `json:"metadata"`
+	UpdatedFeeds map[string][]*UpdatedFeed `json:"updatedFeeds"`
 }
 
 // UpdatedFeed contains the feed that had updates.
