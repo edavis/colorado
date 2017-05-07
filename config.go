@@ -10,6 +10,7 @@ const (
 	localTimestampFmt = "Mon, 02 Jan 2006 15:04:05 MST"
 	callbackName      = "onGetRiverStream"
 	maxEventLog       = 250
+	maxCharCount      = 280
 )
 
 type Config struct {

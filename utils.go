@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/microcosm-cc/bluemonday"
+	"strings"
 	"time"
 )
 
@@ -47,4 +48,24 @@ func sanitizeDate(date string) string {
 func makePlainText(s string) string {
 	p := bluemonday.StrictPolicy()
 	return p.Sanitize(s)
+}
+
+func truncateText(s string) string {
+	s = strings.Trim(s, " ")
+
+	if len(s) <= maxCharCount {
+		return s
+	}
+
+	i := maxCharCount
+	for s[i] != ' ' {
+		i--
+	}
+
+	switch s[i-1] {
+	case '.', ',', ':':
+		return s[:i-1] + "&nbsp;\u2026"
+	default:
+		return s[:i] + "&nbsp;\u2026"
+	}
 }

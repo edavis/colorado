@@ -126,11 +126,12 @@ func (r *River) ProcessFeed(result FetchResult) {
 
 		r.IncrementCounter()
 		itemUpdate := UpdatedFeedItem{
-			Title:     makePlainText(item.Title),
+			Body:      truncateText(makePlainText(item.Description)),
+			Id:        fmt.Sprintf("%d", r.GetCounter()),
 			Link:      item.Link,
 			PermaLink: item.GUID,
 			PubDate:   sanitizeDate(item.Published),
-			Id:        fmt.Sprintf("%d", r.GetCounter()),
+			Title:     makePlainText(item.Title),
 		}
 		feedUpdate.Items = append([]*UpdatedFeedItem{&itemUpdate}, feedUpdate.Items...)
 	}
