@@ -103,6 +103,17 @@ func (r *River) ProcessFeed(result FetchResult) {
 		return fmt.Sprintf("%s:%s", url, guid)
 	}
 
+	extractBody := func(item *gofeed.Item) string {
+		body := ""
+		switch {
+		case item.Description != "":
+			body = item.Description
+		case item.Content != "":
+			body = item.Content
+		}
+		return truncateText(makePlainText(body))
+	}
+
 	feedUpdate := UpdatedFeed{
 		Title:       makePlainText(feed.Title),
 		Website:     feed.Link,
@@ -126,13 +137,14 @@ func (r *River) ProcessFeed(result FetchResult) {
 
 		r.IncrementCounter()
 		itemUpdate := UpdatedFeedItem{
-			Body:      truncateText(makePlainText(item.Description)),
+			Body:      extractBody(item),
 			Id:        fmt.Sprintf("%d", r.GetCounter()),
 			Link:      item.Link,
 			PermaLink: item.GUID,
 			PubDate:   sanitizeDate(item.Published),
 			Title:     makePlainText(item.Title),
 		}
+
 		feedUpdate.Items = append([]*UpdatedFeedItem{&itemUpdate}, feedUpdate.Items...)
 	}
 
