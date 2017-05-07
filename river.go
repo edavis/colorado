@@ -1,11 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/mmcdole/gofeed"
 	"github.com/satori/go.uuid"
-	"log"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -17,9 +16,8 @@ func NewRiver(name string, feeds []string, updateInterval string) *River {
 		Seen:             make(map[string]bool),
 		whenStartedGMT:   nowGMT(),
 		whenStartedLocal: nowLocal(),
-		buffer:           new(bytes.Buffer),
+		Mutex:            new(sync.Mutex),
 	}
-	r.Logger = log.New(r.buffer, "", log.LstdFlags|log.Lmicroseconds)
 
 	duration, err := time.ParseDuration(updateInterval)
 	if err != nil {
@@ -35,10 +33,10 @@ func NewRiver(name string, feeds []string, updateInterval string) *River {
 }
 
 func (r *River) Run() {
-	r.Print("updating feeds (initial fetch)")
+	r.Msg("updating feeds (initial fetch)\n")
 	r.UpdateFeeds()
 
-	r.Printf("fetching feeds every %s\n", r.UpdateInterval)
+	r.Msg("fetching feeds every %s\n", r.UpdateInterval)
 	ticker := time.NewTicker(r.UpdateInterval)
 
 	for {
@@ -46,7 +44,7 @@ func (r *River) Run() {
 		case result := <-r.FetchResults:
 			r.ProcessFeed(result)
 		case <-ticker.C:
-			r.Print("updating feeds")
+			r.Msg("updating feeds\n")
 			r.UpdateFeeds()
 		}
 	}
@@ -69,11 +67,11 @@ func (r *River) UpdateFeeds() {
 
 func (r *River) Fetch(url string) {
 	parser := gofeed.NewParser()
-	r.Printf("fetching %s\n", url)
+	r.Msg("fetching %s\n", url)
 	feed, err := parser.ParseURL(url)
 	fr := FetchResult{URL: url}
 	if err != nil {
-		r.Printf("error parsing %s (%v)\n", url, err)
+		r.Msg("error parsing %s (%v)\n", url, err)
 	} else {
 		fr.Feed = feed
 	}
@@ -121,7 +119,7 @@ func (r *River) ProcessFeed(result FetchResult) {
 		if _, seen := r.Seen[fingerprint]; seen {
 			continue
 		} else {
-			r.Printf("adding %q\n", fingerprint)
+			r.Msg("adding %q\n", fingerprint)
 			newItems += 1
 			r.Seen[fingerprint] = true
 		}
@@ -139,6 +137,18 @@ func (r *River) ProcessFeed(result FetchResult) {
 
 	if newItems > 0 {
 		r.Updates = append([]*UpdatedFeed{&feedUpdate}, r.Updates...)
-		r.Printf("added %d new item(s) from %q to river (counter = %d)\n", newItems, feed.Title, r.GetCounter())
+		r.Msg("added %d new item(s) from %q to river (counter = %d)\n", newItems, feed.Title, r.GetCounter())
 	}
+}
+
+func (r *River) Msg(format string, a ...interface{}) {
+	r.Lock()
+	now := time.Now().Local().Format(localTimestampFmt)
+	event := fmt.Sprintf(format, a...)
+	msg := fmt.Sprintf("%s: %s", now, event)
+	r.Messages = append(r.Messages, msg)
+	if len(r.Messages) > maxEventLog {
+		r.Messages = r.Messages[1:]
+	}
+	r.Unlock()
 }

@@ -8,10 +8,11 @@ import (
 )
 
 func (r *River) serveLog(w http.ResponseWriter, req *http.Request) {
-	b := r.buffer.Bytes()
-	w.Write(b)
-	r.buffer = bytes.NewBuffer(b)
-	r.Logger.SetOutput(r.buffer)
+	var buffer bytes.Buffer
+	for _, message := range r.Messages {
+		fmt.Fprintf(&buffer, message)
+	}
+	buffer.WriteTo(w)
 }
 
 func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {

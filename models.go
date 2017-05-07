@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"github.com/mmcdole/gofeed"
-	"log"
+	"sync"
 	"time"
 )
 
@@ -45,12 +44,12 @@ type River struct {
 	Updates          []*UpdatedFeed
 	Seen             map[string]bool
 	UpdateInterval   time.Duration
+	Messages         []string
 	builds           uint64
 	counter          uint64 // Item id counter
 	whenStartedGMT   string // Track startup times
 	whenStartedLocal string
-	buffer           *bytes.Buffer // Store logs here
-	*log.Logger
+	*sync.Mutex
 }
 
 // FetchResult holds the URL of the feed and its parsed representation.
