@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	userAgent         = "colorado/0.1 (https://github.com/edavis/colorado)"
 	utcTimestampFmt   = "Mon, 02 Jan 2006 15:04:05 GMT"
 	localTimestampFmt = "Mon, 02 Jan 2006 15:04:05 MST"
 	callbackName      = "onGetRiverStream"

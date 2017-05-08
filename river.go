@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mmcdole/gofeed"
 	"github.com/satori/go.uuid"
+	"net/http"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -68,15 +69,32 @@ func (r *River) UpdateFeeds() {
 }
 
 func (r *River) Fetch(url string) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		r.Msg("error creating request for %q\n", url)
+	}
+
+	req.Header.Add("User-Agent", userAgent)
+	req.Header.Add("From", "https://github.com/edavis/colorado")
+	r.Msg("fetching %q\n", url)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		r.Msg("error requesting %q\n", url)
+	}
+	defer resp.Body.Close()
+
 	parser := gofeed.NewParser()
-	r.Msg("fetching %s\n", url)
-	feed, err := parser.ParseURL(url)
+	feed, err := parser.Parse(resp.Body)
 	fr := FetchResult{URL: url}
+
 	if err != nil {
 		r.Msg("error parsing %s (%v)\n", url, err)
 	} else {
 		fr.Feed = feed
 	}
+
 	r.FetchResults <- fr
 }
 
