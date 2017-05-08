@@ -27,7 +27,7 @@ func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
 			"name":             r.Name,
 			"title":            r.Title,
 			"description":      r.Description,
-			"aggregator":       "colorado v0.1",
+			"aggregator":       userAgent,
 			"aggregatorDocs":   "https://github.com/edavis/colorado",
 			"docs":             "http://riverjs.org/",
 			"ctBuilds":         fmt.Sprintf("%d", r.builds),
