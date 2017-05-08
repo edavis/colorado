@@ -32,10 +32,15 @@ func NewRiverContainer(config *Config) *RiverContainer {
 func (rc *RiverContainer) Run() {
 	mux := http.NewServeMux()
 
+	fs := http.FileServer(http.Dir("./static"))
+	mux.Handle("/static/", http.StripPrefix("/static/", fs))
+
 	for name, river := range rc.Rivers {
 		// register HTTP handlers
+		indexUrl := fmt.Sprintf("/%s/", name)
 		logUrl := fmt.Sprintf("/%s/log", name)
 		riverUrl := fmt.Sprintf("/%s/river", name)
+		mux.HandleFunc(indexUrl, river.serveIndex)
 		mux.HandleFunc(logUrl, river.serveLog)
 		mux.HandleFunc(riverUrl, river.serveRiver)
 

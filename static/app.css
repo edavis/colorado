@@ -1,0 +1,118 @@
+@import url(//brick.a.ssl.fastly.net/Lora:400/Ubuntu:400,700/Bitter:700);
+
+body {
+    background-color: whitesmoke;
+    margin: 0;
+}
+
+a {
+    color: #1E68A6;
+    text-decoration: none;
+}
+
+#app {
+    padding: 20px;
+}
+
+.riverContainer h1 {
+    font: bold 56px 'Bitter', monospace;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.riverMenu {
+    background: white;
+    padding: 20px;
+    box-sizing: border-box;
+    border: thin solid #bbb;
+    margin-bottom: 10px;
+}
+
+.riverMenu ul {
+    padding-left: 30px;
+    margin: 0;
+}
+
+.riverList {
+    box-sizing: border-box;
+    padding: 30px;
+    border: thin solid #bbb;
+    max-width: 600px;
+    background-color: white;
+}
+
+@media (min-width: 600px) {
+    .riverList {
+        padding: 40px;
+    }
+}
+
+@media (min-width: 1000px) {
+    .riverContainer {
+        width: 1000px;
+        margin: 0 auto;
+    }
+
+    .riverContainer h1 {
+        margin: 40px 0;
+    }
+
+    .riverMenu {
+        float: right;
+    }
+}
+
+.riverFeed {
+    border-top: thin solid #bbb;
+    padding: 10px 0;
+}
+
+.riverHeader {
+    margin: -17px 0 30px 0;
+    font: .75em 'Ubuntu', sans-serif;
+}
+
+.feedInfo {
+    float: left;
+    background: white;
+    padding-right: 5px;
+}
+
+.favicon {
+    position: relative;
+    top: -1px;
+    vertical-align: middle;
+    padding-right: 4px;
+}
+
+.updateInfo {
+    display: block;
+    float: right;
+    background: white;
+    padding-left: 5px;
+}
+
+.riverItems {
+    margin: 15px 0 25px 0;
+}
+
+.riverItem {
+    font: 1em/1.4 'Lora', serif;
+    margin-bottom: 20px;
+}
+
+.itemTitle {
+    font: bold 18px/1.2 'Ubuntu', sans-serif;
+    margin-bottom: 10px;
+}
+
+.itemMeta {
+    color: #888;
+    margin-top: 10px;
+    font-size: .8em;
+}
+
+.loading {
+    color: #bbb;
+    text-align: center;
+}

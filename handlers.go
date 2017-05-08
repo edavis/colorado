@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
+	"path"
 )
 
 func (r *River) serveLog(w http.ResponseWriter, req *http.Request) {
@@ -44,4 +46,18 @@ func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "%s(", callbackName)
 	enc.Encode(js)
 	fmt.Fprint(w, ")")
+}
+
+func (r *River) serveIndex(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	fname := path.Join("templates", "river_index.html")
+	tmpl, err := template.ParseFiles(fname)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	if err := tmpl.Execute(w, nil); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
