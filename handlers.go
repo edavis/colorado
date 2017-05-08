@@ -25,6 +25,8 @@ func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
 	js := RiverJS{
 		Metadata: map[string]string{
 			"name":             r.Name,
+			"title":            r.Title,
+			"description":      r.Description,
 			"aggregator":       "colorado v0.1",
 			"aggregatorDocs":   "https://github.com/edavis/colorado",
 			"docs":             "http://riverjs.org/",

@@ -18,9 +18,11 @@ type Config struct {
 		Update string
 	}
 	River []struct {
-		Name   string
-		Feeds  []string
-		Update string
+		Name        string
+		Title       string
+		Description string
+		Feeds       []string
+		Update      string
 	}
 }
 

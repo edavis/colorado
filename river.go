@@ -9,9 +9,11 @@ import (
 	"time"
 )
 
-func NewRiver(name string, feeds []string, updateInterval string) *River {
+func NewRiver(name string, feeds []string, updateInterval, title, description string) *River {
 	r := River{
 		Name:             name,
+		Title:            title,
+		Description:      description,
 		FetchResults:     make(chan FetchResult),
 		Seen:             make(map[string]bool),
 		whenStartedGMT:   nowGMT(),

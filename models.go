@@ -39,6 +39,8 @@ type RiverContainer struct {
 // River holds the main app logic.
 type River struct {
 	Name             string
+	Title            string
+	Description      string
 	FetchResults     chan FetchResult
 	Streams          []string
 	Updates          []*UpdatedFeed

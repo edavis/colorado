@@ -23,7 +23,7 @@ func NewRiverContainer(config *Config) *RiverContainer {
 			interval = "15m"
 		}
 
-		rc.Rivers[obj.Name] = NewRiver(obj.Name, obj.Feeds, interval)
+		rc.Rivers[obj.Name] = NewRiver(obj.Name, obj.Feeds, interval, obj.Title, obj.Description)
 	}
 
 	return &rc

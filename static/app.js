@@ -29,43 +29,45 @@ var RiverList = React.createClass({
             jsonp: false,
             jsonpCallback: 'onGetRiverStream',
             success: function(data) {
-                console.log(this.state.url, 'success');
-                this.setState({feeds: data.updatedFeeds.updatedFeed});
+                this.setState({
+                    feeds: data.updatedFeeds.updatedFeed,
+                    title: data.metadata.title,
+                    description: data.metadata.description,
+                });
+                if (data.metadata.title && data.metadata.description) {
+                    document.title = data.metadata.title + ' | ' + data.metadata.description;
+                } else if (data.metadata.title) {
+                    document.title = data.metadata.title;
+                } else {
+                    document.title = 'river.js feed';
+                }
             }.bind(this),
             error: function(xhr, status, err) {
                 console.error(this.state.url, status, err.toString());
             }.bind(this)
         });
     },
-    changeSource: function(newUrl) {
-        this.setState({feeds: [], url: newUrl}, function() {
-            this.fetchRiver();
-        });
-    },
     getInitialState: function() {
-        return {feeds: [], url: this.props.sources[0]};
+        return {
+            feeds: [],
+            title: '',
+            url: 'river'
+        };
     },
     componentDidMount: function() {
         this.fetchRiver();
-        setInterval(this.fetchRiver, this.props.poll * 1000);
+        setInterval(this.fetchRiver, 60 * 1000);
     },
     render: function() {
         var that = this;
         var feeds = this.state.feeds.map(function(feed) {
             return <RiverFeed key={feed.whenLastUpdate + feed.feedUrl} feed={feed} />;
         });
-        var sources = this.props.sources.map(function(source) {
-            return <li><a href="javascript:void(0);" onClick={() => that.changeSource(source)}>{source}</a></li>;
-        });
         var loading = <div className="loading"><p>Loading&hellip;</p><img src="/static/ajax-loader.gif"></img></div>;
         return (
             <div className="riverContainer">
-                <h1>rsshub.org</h1>
-                <nav className="riverMenu">
-                    <ul id="menu">
-                        {sources}
-                    </ul>
-                </nav>
+                <h1 className="title">{this.state.title}</h1>
+                {this.state.description ? <h2 className="description">{this.state.description}</h2> : ''}
                 <div className="riverList">
                     {this.state.feeds.length ? feeds : loading}
                 </div>
@@ -119,7 +121,4 @@ var RiverItem = React.createClass({
     }
 });
 
-ReactDOM.render(
-    <RiverList sources={RiverConfig.sources} poll={RiverConfig.poll} />,
-    document.getElementById(RiverConfig.mount)
-);
+ReactDOM.render( <RiverList />, document.getElementById('app') );
