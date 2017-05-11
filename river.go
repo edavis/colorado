@@ -20,6 +20,7 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 		whenStartedGMT:   nowGMT(),
 		whenStartedLocal: nowLocal(),
 		Mutex:            new(sync.Mutex),
+		httpClient:       http.DefaultClient,
 	}
 
 	duration, err := time.ParseDuration(updateInterval)
@@ -78,8 +79,7 @@ func (r *River) Fetch(url string) {
 	req.Header.Add("From", "https://github.com/edavis/colorado")
 	r.Msg("fetching %q\n", url)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := r.httpClient.Do(req)
 	if err != nil {
 		r.Msg("error requesting %q\n", url)
 	}

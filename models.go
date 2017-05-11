@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/mmcdole/gofeed"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -49,6 +50,7 @@ type River struct {
 	Messages         []string
 	builds           uint64
 	counter          uint64 // Item id counter
+	httpClient       *http.Client
 	whenStartedGMT   string // Track startup times
 	whenStartedLocal string
 	*sync.Mutex
