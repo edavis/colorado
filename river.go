@@ -73,6 +73,7 @@ func (r *River) Fetch(url string) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		r.Msg("error creating request for %q\n", url)
+		return
 	}
 
 	req.Header.Add("User-Agent", userAgent)
@@ -82,6 +83,7 @@ func (r *River) Fetch(url string) {
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
 		r.Msg("error requesting %q\n", url)
+		return
 	}
 	defer resp.Body.Close()
 
