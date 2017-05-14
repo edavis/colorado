@@ -10,6 +10,7 @@ const (
 	utcTimestampFmt   = "Mon, 02 Jan 2006 15:04:05 GMT"
 	localTimestampFmt = "Mon, 02 Jan 2006 15:04:05 MST"
 	callbackName      = "onGetRiverStream"
+	opmlDocs          = "http://dev.opml.org/spec2.html"
 	maxEventLog       = 250
 	maxCharCount      = 280
 	maxItems          = 5

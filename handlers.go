@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -33,6 +34,20 @@ type UpdatedFeedItem struct {
 	Title     string `json:"title"`
 	Link      string `json:"link"`
 	Id        string `json:"id"`
+}
+
+type OPML struct {
+	XMLName  xml.Name  `xml:"opml"`
+	Version  string    `xml:"version,attr"`
+	Title    string    `xml:"head>title"`
+	Docs     string    `xml:"head>docs"`
+	Outlines []Outline `xml:"body>outline"`
+}
+
+type Outline struct {
+	Text string `xml:"text,attr"`
+	Type string `xml:"type,attr"`
+	URL  string `xml:"xmlUrl,attr"`
 }
 
 func (r *River) serveLog(w http.ResponseWriter, req *http.Request) {
@@ -88,4 +103,31 @@ func (r *River) serveIndex(w http.ResponseWriter, req *http.Request) {
 	if err := tmpl.Execute(w, nil); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func (r *River) serveFeedsOpml(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text/xml; charset=utf-8")
+
+	opml := OPML{
+		Version: "2.0",
+		Title:   r.Name + " feeds",
+		Docs:    opmlDocs,
+	}
+	for _, url := range r.Streams {
+		outline := Outline{
+			Text: url,
+			URL:  url,
+			Type: "rss",
+		}
+		opml.Outlines = append(opml.Outlines, outline)
+	}
+
+	encoded, err := xml.MarshalIndent(opml, "", "  ")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write([]byte(xml.Header))
+	w.Write(encoded)
 }

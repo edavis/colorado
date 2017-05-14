@@ -41,12 +41,10 @@ func (rc *RiverContainer) Run() {
 
 	for name, river := range rc.Rivers {
 		// register HTTP handlers
-		indexUrl := fmt.Sprintf("/%s/", name)
-		logUrl := fmt.Sprintf("/%s/log", name)
-		riverUrl := fmt.Sprintf("/%s/river", name)
-		mux.HandleFunc(indexUrl, river.serveIndex)
-		mux.HandleFunc(logUrl, river.serveLog)
-		mux.HandleFunc(riverUrl, river.serveRiver)
+		mux.HandleFunc(fmt.Sprintf("/%s/", name), river.serveIndex)
+		mux.HandleFunc(fmt.Sprintf("/%s/log", name), river.serveLog)
+		mux.HandleFunc(fmt.Sprintf("/%s/river", name), river.serveRiver)
+		mux.HandleFunc(fmt.Sprintf("/%s/feeds.opml", name), river.serveFeedsOpml)
 
 		// start fetching feeds
 		go river.Run()
