@@ -12,6 +12,8 @@ const (
 	callbackName      = "onGetRiverStream"
 	maxEventLog       = 250
 	maxCharCount      = 280
+	maxItems          = 5
+	maxFeedUpdates    = 100
 )
 
 type Config struct {

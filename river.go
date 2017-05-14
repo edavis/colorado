@@ -170,8 +170,17 @@ func (r *River) ProcessFeed(result FetchResult) {
 		feedUpdate.Items = append([]*UpdatedFeedItem{&itemUpdate}, feedUpdate.Items...)
 	}
 
+	if len(feedUpdate.Items) > maxItems {
+		feedUpdate.Items = feedUpdate.Items[:maxItems]
+	}
+
 	if newItems > 0 {
 		r.Updates = append([]*UpdatedFeed{&feedUpdate}, r.Updates...)
+
+		if len(r.Updates) > maxFeedUpdates {
+			r.Updates = r.Updates[:maxFeedUpdates]
+		}
+
 		r.Msg("added %d new item(s) from %q to river (counter = %d)\n", newItems, feed.Title, r.GetCounter())
 	}
 }
