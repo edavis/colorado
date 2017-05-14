@@ -57,6 +57,7 @@ func truncateText(s string) string {
 		return s
 	}
 
+	s = s[:maxCharCount+1]
 	idx := strings.LastIndex(s, " ")
 	if idx <= 0 {
 		return ""
