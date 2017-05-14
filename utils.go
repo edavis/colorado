@@ -57,15 +57,15 @@ func truncateText(s string) string {
 		return s
 	}
 
-	i := maxCharCount
-	for s[i] != ' ' {
-		i--
+	idx := strings.LastIndex(s, " ")
+	if idx <= 0 {
+		return ""
 	}
 
-	switch s[i-1] {
+	switch s[idx-1] {
 	case '.', ',', ':':
-		return s[:i-1] + "&nbsp;\u2026"
+		return s[:idx-1] + "&nbsp;\u2026"
 	default:
-		return s[:i] + "&nbsp;\u2026"
+		return s[:idx] + "&nbsp;\u2026"
 	}
 }
