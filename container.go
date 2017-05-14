@@ -6,6 +6,10 @@ import (
 	"net/http"
 )
 
+type RiverContainer struct {
+	Rivers map[string]*River
+}
+
 func NewRiverContainer(config *Config) *RiverContainer {
 	rc := RiverContainer{
 		Rivers: make(map[string]*River),

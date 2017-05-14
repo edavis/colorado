@@ -9,6 +9,32 @@ import (
 	"path"
 )
 
+// RiverJS is the root JSON returned by /river.
+type RiverJS struct {
+	Metadata     map[string]string         `json:"metadata"`
+	UpdatedFeeds map[string][]*UpdatedFeed `json:"updatedFeeds"`
+}
+
+// UpdatedFeed contains the feed that had updates.
+type UpdatedFeed struct {
+	URL         string             `json:"feedUrl"`
+	Website     string             `json:"websiteUrl"`
+	Title       string             `json:"feedTitle"`
+	Description string             `json:"feedDescription"`
+	LastUpdate  string             `json:"whenLastUpdate"`
+	Items       []*UpdatedFeedItem `json:"item"`
+}
+
+// UpdatedFeedItem contains the items of the updated feed.
+type UpdatedFeedItem struct {
+	Body      string `json:"body"`
+	PermaLink string `json:"permaLink"`
+	PubDate   string `json:"pubDate"`
+	Title     string `json:"title"`
+	Link      string `json:"link"`
+	Id        string `json:"id"`
+}
+
 func (r *River) serveLog(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 

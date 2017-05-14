@@ -10,6 +10,31 @@ import (
 	"time"
 )
 
+// River holds the main app logic.
+type River struct {
+	Name             string
+	Title            string
+	Description      string
+	FetchResults     chan FetchResult
+	Streams          []string
+	Updates          []*UpdatedFeed
+	Seen             map[string]bool
+	UpdateInterval   time.Duration
+	Messages         []string
+	builds           uint64
+	counter          uint64 // Item id counter
+	httpClient       *http.Client
+	whenStartedGMT   string // Track startup times
+	whenStartedLocal string
+	*sync.Mutex
+}
+
+// FetchResult holds the URL of the feed and its parsed representation.
+type FetchResult struct {
+	URL  string
+	Feed *gofeed.Feed
+}
+
 func NewRiver(name string, feeds []string, updateInterval, title, description string) *River {
 	r := River{
 		Name:             name,
