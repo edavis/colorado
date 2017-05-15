@@ -10,13 +10,19 @@ import (
 	"time"
 )
 
+type WebFeed struct {
+	URL          string
+	LastModified string
+	ETag         string
+}
+
 // River holds the main app logic.
 type River struct {
 	Name             string
 	Title            string
 	Description      string
 	FetchResults     chan FetchResult
-	Streams          []string
+	Streams          []*WebFeed
 	Updates          []*UpdatedFeed
 	Seen             map[string]bool
 	UpdateInterval   time.Duration
@@ -56,7 +62,8 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 	r.UpdateInterval = duration
 
 	for _, feed := range feeds {
-		r.Streams = append(r.Streams, feed)
+		wf := WebFeed{URL: feed}
+		r.Streams = append(r.Streams, &wf)
 	}
 	return &r
 }
@@ -88,36 +95,57 @@ func (r *River) IncrementCounter() {
 }
 
 func (r *River) UpdateFeeds() {
-	for _, stream := range r.Streams {
-		go r.Fetch(stream)
+	for _, wf := range r.Streams {
+		go r.Fetch(wf)
 	}
 	r.builds += 1
 }
 
-func (r *River) Fetch(url string) {
-	req, err := http.NewRequest("GET", url, nil)
+func (r *River) Fetch(wf *WebFeed) {
+	req, err := http.NewRequest("GET", wf.URL, nil)
 	if err != nil {
-		r.Msg("error creating request for %q\n", url)
+		r.Msg("error creating request for %q\n", wf.URL)
 		return
 	}
 
 	req.Header.Add("User-Agent", userAgent)
 	req.Header.Add("From", "https://github.com/edavis/colorado")
-	r.Msg("fetching %q\n", url)
+
+	if wf.LastModified != "" {
+		req.Header.Add("If-Modified-Since", wf.LastModified)
+	}
+
+	if wf.ETag != "" {
+		req.Header.Add("If-None-Match", wf.ETag)
+	}
+
+	r.Msg("fetching %q\n", wf.URL)
+
+	if wf.LastModified != "" || wf.ETag != "" {
+		r.Msg("- sending If-Modified-Since = %q, If-None-Match = %q\n", wf.LastModified, wf.ETag)
+	}
 
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
-		r.Msg("error requesting %q\n", url)
+		r.Msg("error requesting %q\n", wf.URL)
 		return
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotModified {
+		r.Msg("received HTTP 304 when fetching %q, skipping\n", wf.URL)
+		return
+	}
+
+	wf.LastModified = resp.Header.Get("Last-Modified")
+	wf.ETag = resp.Header.Get("ETag")
+
 	parser := gofeed.NewParser()
 	feed, err := parser.Parse(resp.Body)
-	fr := FetchResult{URL: url}
+	fr := FetchResult{URL: wf.URL}
 
 	if err != nil {
-		r.Msg("error parsing %s (%v)\n", url, err)
+		r.Msg("error parsing %s (%v)\n", wf.URL, err)
 	} else {
 		fr.Feed = feed
 	}
