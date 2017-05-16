@@ -202,7 +202,6 @@ func (r *River) ProcessFeed(result FetchResult) {
 		if _, seen := r.Seen[fingerprint]; seen {
 			continue
 		} else {
-			logger.Printf("adding %q", fingerprint)
 			newItems += 1
 			r.Seen[fingerprint] = true
 		}
