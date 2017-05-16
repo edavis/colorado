@@ -5,7 +5,6 @@ import (
 	"github.com/mmcdole/gofeed"
 	"github.com/satori/go.uuid"
 	"net/http"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -32,7 +31,6 @@ type River struct {
 	httpClient       *http.Client
 	whenStartedGMT   string // Track startup times
 	whenStartedLocal string
-	*sync.Mutex
 }
 
 // FetchResult holds the URL of the feed and its parsed representation.
@@ -50,13 +48,12 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 		Seen:             make(map[string]bool),
 		whenStartedGMT:   nowGMT(),
 		whenStartedLocal: nowLocal(),
-		Mutex:            new(sync.Mutex),
 		httpClient:       http.DefaultClient,
 	}
 
 	duration, err := time.ParseDuration(updateInterval)
 	if err != nil {
-		fmt.Printf("the duration %q is invalid, using default of 15 minutes\n", updateInterval)
+		errorLog.Printf("the duration %q is invalid, using default of 15 minutes", updateInterval)
 		duration = 15 * time.Minute
 	}
 	r.UpdateInterval = duration
@@ -69,10 +66,10 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 }
 
 func (r *River) Run() {
-	r.Msg("updating feeds (initial fetch)\n")
+	logger.Println("updating feeds (initial fetch)")
 	r.UpdateFeeds()
 
-	r.Msg("fetching feeds every %s\n", r.UpdateInterval)
+	logger.Printf("fetching feeds every %s", r.UpdateInterval)
 	ticker := time.NewTicker(r.UpdateInterval)
 
 	for {
@@ -80,7 +77,7 @@ func (r *River) Run() {
 		case result := <-r.FetchResults:
 			r.ProcessFeed(result)
 		case <-ticker.C:
-			r.Msg("updating feeds\n")
+			logger.Println("updating feeds")
 			r.UpdateFeeds()
 		}
 	}
@@ -104,7 +101,7 @@ func (r *River) UpdateFeeds() {
 func (r *River) Fetch(wf *WebFeed) {
 	req, err := http.NewRequest("GET", wf.URL, nil)
 	if err != nil {
-		r.Msg("error creating request for %q\n", wf.URL)
+		errorLog.Printf("error creating request for %q", wf.URL)
 		return
 	}
 
@@ -119,21 +116,21 @@ func (r *River) Fetch(wf *WebFeed) {
 		req.Header.Add("If-None-Match", wf.ETag)
 	}
 
-	r.Msg("fetching %q\n", wf.URL)
+	logger.Printf("fetching %q", wf.URL)
 
 	if wf.LastModified != "" || wf.ETag != "" {
-		r.Msg("- sending If-Modified-Since = %q, If-None-Match = %q\n", wf.LastModified, wf.ETag)
+		logger.Printf("- sending If-Modified-Since = %v, If-None-Match = %v", wf.LastModified, wf.ETag)
 	}
 
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
-		r.Msg("error requesting %q\n", wf.URL)
+		errorLog.Printf("error requesting %q", wf.URL)
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusNotModified {
-		r.Msg("received HTTP 304 when fetching %q, skipping\n", wf.URL)
+		logger.Printf("received HTTP 304 when fetching %q, skipping", wf.URL)
 		return
 	}
 
@@ -145,7 +142,7 @@ func (r *River) Fetch(wf *WebFeed) {
 	fr := FetchResult{URL: wf.URL}
 
 	if err != nil {
-		r.Msg("error parsing %s (%v)\n", wf.URL, err)
+		errorLog.Printf("error parsing %s (%v)", wf.URL, err)
 	} else {
 		fr.Feed = feed
 	}
@@ -205,7 +202,7 @@ func (r *River) ProcessFeed(result FetchResult) {
 		if _, seen := r.Seen[fingerprint]; seen {
 			continue
 		} else {
-			r.Msg("adding %q\n", fingerprint)
+			logger.Printf("adding %q", fingerprint)
 			newItems += 1
 			r.Seen[fingerprint] = true
 		}
@@ -234,18 +231,6 @@ func (r *River) ProcessFeed(result FetchResult) {
 			r.Updates = r.Updates[:maxFeedUpdates]
 		}
 
-		r.Msg("added %d new item(s) from %q to river (counter = %d)\n", newItems, feed.Title, r.GetCounter())
+		logger.Printf("added %d new item(s) from %q to river (counter = %d)", newItems, feed.Title, r.GetCounter())
 	}
-}
-
-func (r *River) Msg(format string, a ...interface{}) {
-	r.Lock()
-	now := time.Now().Local().Format(localTimestampFmt)
-	event := fmt.Sprintf(format, a...)
-	msg := fmt.Sprintf("%s: %s", now, event)
-	r.Messages = append(r.Messages, msg)
-	if len(r.Messages) > maxEventLog {
-		r.Messages = r.Messages[1:]
-	}
-	r.Unlock()
 }

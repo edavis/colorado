@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -50,5 +49,7 @@ func (rc *RiverContainer) Run() {
 		go river.Run()
 	}
 
-	log.Fatalln(http.ListenAndServe(":9000", mux))
+	if err := http.ListenAndServe(":9000", mux); err != nil {
+		logger.Fatalln(err)
+	}
 }
