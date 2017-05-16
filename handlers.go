@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -48,16 +47,6 @@ type Outline struct {
 	Text string `xml:"text,attr"`
 	Type string `xml:"type,attr"`
 	URL  string `xml:"xmlUrl,attr"`
-}
-
-func (r *River) serveLog(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-
-	var buffer bytes.Buffer
-	for _, message := range r.Messages {
-		fmt.Fprintf(&buffer, message)
-	}
-	buffer.WriteTo(w)
 }
 
 func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {

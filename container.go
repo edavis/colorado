@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net/http"
+	"os"
 )
 
 type RiverContainer struct {
@@ -38,10 +40,22 @@ func (rc *RiverContainer) Run() {
 	fs := http.FileServer(http.Dir("./static"))
 	mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
+	mux.HandleFunc("/errors", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+		fp, err := os.Open("error.log")
+		if err != nil {
+			errorLog.Println(err)
+		}
+		defer fp.Close()
+
+		reader := bufio.NewReader(fp)
+		reader.WriteTo(w)
+	})
+
 	for name, river := range rc.Rivers {
 		// register HTTP handlers
 		mux.HandleFunc(fmt.Sprintf("/%s/", name), river.serveIndex)
-		mux.HandleFunc(fmt.Sprintf("/%s/log", name), river.serveLog)
 		mux.HandleFunc(fmt.Sprintf("/%s/river", name), river.serveRiver)
 		mux.HandleFunc(fmt.Sprintf("/%s/feeds.opml", name), river.serveFeedsOpml)
 
