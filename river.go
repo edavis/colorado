@@ -119,7 +119,7 @@ func (r *River) Fetch(wf *WebFeed) {
 	logger.Printf("fetching %q", wf.URL)
 
 	if wf.LastModified != "" || wf.ETag != "" {
-		logger.Printf("- sending If-Modified-Since = %v, If-None-Match = %v", wf.LastModified, wf.ETag)
+		logger.Printf("- sending If-Modified-Since = %q, If-None-Match = %v", wf.LastModified, wf.ETag)
 	}
 
 	resp, err := r.httpClient.Do(req)
