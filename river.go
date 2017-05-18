@@ -124,7 +124,7 @@ func (r *River) Fetch(wf *WebFeed) {
 
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
-		errorLog.Printf("error requesting %q", wf.URL)
+		errorLog.Printf("error requesting %s (%v)", wf.URL, err)
 		return
 	}
 	defer resp.Body.Close()
