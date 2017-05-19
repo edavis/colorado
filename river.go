@@ -21,6 +21,7 @@ type River struct {
 	Title            string
 	Description      string
 	FetchResults     chan FetchResult
+	WebFeedChan      chan *WebFeed
 	Streams          []*WebFeed
 	Updates          []*UpdatedFeed
 	Seen             map[string]bool
@@ -45,6 +46,7 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 		Title:            title,
 		Description:      description,
 		FetchResults:     make(chan FetchResult),
+		WebFeedChan:      make(chan *WebFeed),
 		Seen:             make(map[string]bool),
 		whenStartedGMT:   nowGMT(),
 		whenStartedLocal: nowLocal(),
@@ -66,10 +68,10 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 }
 
 func (r *River) Run() {
-	logger.Println("updating feeds (initial fetch)")
-	r.UpdateFeeds()
+	// start the worker and initial feed check
+	go r.FetchWorker()
+	go r.UpdateFeeds()
 
-	logger.Printf("fetching feeds every %s", r.UpdateInterval)
 	ticker := time.NewTicker(r.UpdateInterval)
 
 	for {
@@ -78,7 +80,7 @@ func (r *River) Run() {
 			r.ProcessFeed(result)
 		case <-ticker.C:
 			logger.Println("updating feeds")
-			r.UpdateFeeds()
+			go r.UpdateFeeds()
 		}
 	}
 }
@@ -93,9 +95,15 @@ func (r *River) IncrementCounter() {
 
 func (r *River) UpdateFeeds() {
 	for _, wf := range r.Streams {
-		go r.Fetch(wf)
+		r.WebFeedChan <- wf
 	}
 	r.builds += 1
+}
+
+func (r *River) FetchWorker() {
+	for {
+		r.Fetch(<-r.WebFeedChan)
+	}
 }
 
 func (r *River) Fetch(wf *WebFeed) {
@@ -114,12 +122,6 @@ func (r *River) Fetch(wf *WebFeed) {
 
 	if wf.ETag != "" {
 		req.Header.Add("If-None-Match", wf.ETag)
-	}
-
-	logger.Printf("fetching %q", wf.URL)
-
-	if wf.LastModified != "" || wf.ETag != "" {
-		logger.Printf("- sending If-Modified-Since = %q, If-None-Match = %v", wf.LastModified, wf.ETag)
 	}
 
 	resp, err := r.httpClient.Do(req)
@@ -230,6 +232,6 @@ func (r *River) ProcessFeed(result FetchResult) {
 			r.Updates = r.Updates[:maxFeedUpdates]
 		}
 
-		logger.Printf("added %d new item(s) from %q to river (counter = %d)", newItems, feed.Title, r.GetCounter())
+		logger.Printf("added %d new item(s) from %q to %s (counter = %d)", newItems, feedUrl, r.Name, r.GetCounter())
 	}
 }
