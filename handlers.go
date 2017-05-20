@@ -11,8 +11,10 @@ import (
 
 // RiverJS is the root JSON returned by /river.
 type RiverJS struct {
-	Metadata     map[string]string         `json:"metadata"`
-	UpdatedFeeds map[string][]*UpdatedFeed `json:"updatedFeeds"`
+	Metadata     map[string]string `json:"metadata"`
+	UpdatedFeeds struct {
+		UpdatedFeed []*UpdatedFeed `json:"updatedFeed"`
+	} `json:"updatedFeeds"`
 }
 
 // UpdatedFeed contains the feed that had updates.
@@ -66,9 +68,11 @@ func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
 			"whenStartedGMT":   r.whenStartedGMT,
 			"whenStartedLocal": r.whenStartedLocal,
 		},
-		UpdatedFeeds: map[string][]*UpdatedFeed{
-			"updatedFeed": r.Updates,
-		},
+	}
+
+	err := db.View(getRiver(r.Name, &js))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	enc := json.NewEncoder(w)
