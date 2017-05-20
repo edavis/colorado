@@ -128,7 +128,7 @@ func (r *River) Fetch(wf *WebFeed) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusNotModified {
-		logger.Printf("received HTTP 304 when fetching %q, skipping", wf.URL)
+		logger.Printf("added 0 new item(s) from %q to %s (HTTP 304)", wf.URL, r.Name)
 		return
 	}
 
@@ -226,7 +226,7 @@ func (r *River) ProcessFeed(result FetchResult) {
 			errorLog.Println(err)
 			logger.Println(err)
 		}
-
-		logger.Printf("added %d new item(s) from %q to %s (counter = %d)", newItems, feedUrl, r.Name, r.GetCounter())
 	}
+
+	logger.Printf("added %d new item(s) from %q to %s (counter = %d)", newItems, feedUrl, r.Name, r.GetCounter())
 }
