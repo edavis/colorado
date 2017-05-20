@@ -20,11 +20,11 @@ func updateRiver(name string, newUpdate *UpdatedFeed) func(*bolt.Tx) error {
 	return func(tx *bolt.Tx) error {
 		var updates []*UpdatedFeed
 
-		// 1) Get the JSON out of bolt
+		// Get the JSON out of boltdb
 		b := tx.Bucket([]byte(name))
 		obj := b.Get([]byte("river"))
 
-		// 2) Decode the byte slice into a slice of *UpdateFeed and
+		// Decode the byte slice into a slice of *UpdateFeed and
 		// prepend the new update
 		if obj != nil {
 			json.Unmarshal(obj, &updates)
@@ -33,7 +33,12 @@ func updateRiver(name string, newUpdate *UpdatedFeed) func(*bolt.Tx) error {
 			updates = []*UpdatedFeed{newUpdate}
 		}
 
-		// 3) Encode the new river object and update bolt with it
+		// Trim the update slice down to size
+		if len(updates) > maxFeedUpdates {
+			updates = updates[:maxFeedUpdates]
+		}
+
+		// Encode the new river object and update bolt with it
 		updatedRiver, err := json.Marshal(updates)
 		err = b.Put([]byte("river"), updatedRiver)
 		if err != nil {
