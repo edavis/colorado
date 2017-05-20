@@ -42,7 +42,9 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 		WebFeedChan:      make(chan *WebFeed),
 		whenStartedGMT:   nowGMT(),
 		whenStartedLocal: nowLocal(),
-		httpClient:       http.DefaultClient,
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
 
 	duration, err := time.ParseDuration(updateInterval)
