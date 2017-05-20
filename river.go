@@ -23,7 +23,6 @@ type River struct {
 	FetchResults     chan FetchResult
 	WebFeedChan      chan *WebFeed
 	Streams          []*WebFeed
-	Seen             map[string]bool
 	UpdateInterval   time.Duration
 	builds           uint64
 	counter          uint64 // Item id counter
@@ -45,7 +44,6 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 		Description:      description,
 		FetchResults:     make(chan FetchResult),
 		WebFeedChan:      make(chan *WebFeed),
-		Seen:             make(map[string]bool),
 		whenStartedGMT:   nowGMT(),
 		whenStartedLocal: nowLocal(),
 		httpClient:       http.DefaultClient,
@@ -205,11 +203,15 @@ func (r *River) ProcessFeed(result FetchResult) {
 		item := feed.Items[i]
 		fingerprint := generateFingerprint(feedUrl, item)
 
-		if _, seen := r.Seen[fingerprint]; seen {
+		var seen bool
+		if err := db.Batch(checkFingerprint(r.Name, fingerprint, &seen)); err != nil {
+			errorLog.Println(err)
+		}
+
+		if seen {
 			continue
 		} else {
 			newItems += 1
-			r.Seen[fingerprint] = true
 		}
 
 		r.IncrementCounter()

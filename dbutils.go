@@ -55,3 +55,21 @@ func getRiver(name string, js *RiverJS) func(*bolt.Tx) error {
 		return nil
 	}
 }
+
+// checkFingerprint
+func checkFingerprint(name, fingerprint string, seen *bool) func(*bolt.Tx) error {
+	return func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(name))
+		result := b.Get([]byte(fingerprint))
+		if result != nil {
+			*seen = true
+		} else {
+			*seen = false
+			err := b.Put([]byte(fingerprint), []byte{1})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}

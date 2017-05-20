@@ -44,7 +44,7 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		logger.Println("\ncleaning up...")
+		logger.Println("cleaning up...")
 		cleanup()
 		logger.Println("shutting down")
 		os.Exit(1)
