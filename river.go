@@ -108,7 +108,7 @@ func (r *River) FetchWorker() {
 func (r *River) Fetch(wf *WebFeed) {
 	req, err := http.NewRequest("GET", wf.URL, nil)
 	if err != nil {
-		errorLog.Printf("error creating request for %q", wf.URL)
+		errorLog.Printf("error creating request for %q (%v)", wf.URL, err)
 		return
 	}
 
@@ -117,12 +117,12 @@ func (r *River) Fetch(wf *WebFeed) {
 
 	err = db.View(getCacheHeaders(r.Name, wf.URL, req))
 	if err != nil {
-		errorLog.Println(err)
+		errorLog.Printf("couldn't set cache headers on request for %q (%v)", wf.URL, err)
 	}
 
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
-		errorLog.Printf("error requesting %s (%v)", wf.URL, err)
+		errorLog.Printf("error requesting %q (%v)", wf.URL, err)
 		return
 	}
 	defer resp.Body.Close()
