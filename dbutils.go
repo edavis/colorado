@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/boltdb/bolt"
+	"net/http"
 )
 
 // createBucket creates the bucket if it does not exist.
@@ -61,7 +62,7 @@ func getRiver(name string, js *RiverJS) func(*bolt.Tx) error {
 	}
 }
 
-// checkFingerprint
+// checkFingerprint determines whether the given fingerprint has been seen before.
 func checkFingerprint(name, fingerprint string, seen *bool) func(*bolt.Tx) error {
 	return func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(name))
@@ -76,5 +77,33 @@ func checkFingerprint(name, fingerprint string, seen *bool) func(*bolt.Tx) error
 			}
 		}
 		return nil
+	}
+}
+
+// getCacheHeaders gets Last-Modified and ETag out of boltdb.
+func getCacheHeaders(name, url string, req *http.Request) func(*bolt.Tx) error {
+	return func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(name))
+		lm := b.Get([]byte("lastModified:" + url))
+		e := b.Get([]byte("etag:" + url))
+		if lm != nil {
+			req.Header.Add("If-Modified-Since", string(lm))
+		}
+		if e != nil {
+			req.Header.Add("If-None-Match", string(e))
+		}
+		return nil
+	}
+}
+
+// setCacheHeaders stores Last-Modified and ETag HTTP headers in boltdb.
+func setCacheHeaders(name, url string, resp *http.Response) func(*bolt.Tx) error {
+	return func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(name))
+		lm := resp.Header.Get("Last-Modified")
+		e := resp.Header.Get("ETag")
+		err := b.Put([]byte("lastModified:"+url), []byte(lm))
+		err = b.Put([]byte("etag:"+url), []byte(e))
+		return err
 	}
 }

@@ -10,9 +10,7 @@ import (
 )
 
 type WebFeed struct {
-	URL          string
-	LastModified string
-	ETag         string
+	URL string
 }
 
 // River holds the main app logic.
@@ -117,12 +115,9 @@ func (r *River) Fetch(wf *WebFeed) {
 	req.Header.Add("User-Agent", userAgent)
 	req.Header.Add("From", "https://github.com/edavis/colorado")
 
-	if wf.LastModified != "" {
-		req.Header.Add("If-Modified-Since", wf.LastModified)
-	}
-
-	if wf.ETag != "" {
-		req.Header.Add("If-None-Match", wf.ETag)
+	err = db.View(getCacheHeaders(r.Name, wf.URL, req))
+	if err != nil {
+		errorLog.Println(err)
 	}
 
 	resp, err := r.httpClient.Do(req)
@@ -137,8 +132,10 @@ func (r *River) Fetch(wf *WebFeed) {
 		return
 	}
 
-	wf.LastModified = resp.Header.Get("Last-Modified")
-	wf.ETag = resp.Header.Get("ETag")
+	err = db.Batch(setCacheHeaders(r.Name, wf.URL, resp))
+	if err != nil {
+		errorLog.Println(err)
+	}
 
 	parser := gofeed.NewParser()
 	feed, err := parser.Parse(resp.Body)
