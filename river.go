@@ -132,31 +132,25 @@ func (r *River) Fetch(wf *WebFeed) {
 		return
 	}
 
-	err = db.Batch(setCacheHeaders(r.Name, wf.URL, resp))
-	if err != nil {
-		errorLog.Println(err)
-	}
-
 	parser := gofeed.NewParser()
 	feed, err := parser.Parse(resp.Body)
-	fr := FetchResult{URL: wf.URL}
-
 	if err != nil {
-		errorLog.Printf("error parsing %s (%v)", wf.URL, err)
-	} else {
-		fr.Feed = feed
-	}
-
-	r.FetchResults <- fr
-}
-
-func (r *River) ProcessFeed(result FetchResult) {
-	var feed *gofeed.Feed
-
-	if feed = result.Feed; feed == nil {
+		errorLog.Printf("error parsing %q (%v)", wf.URL, err)
 		return
 	}
 
+	// If made it this far, the fetch was a success. Update the cache
+	// headers and send a FetchResult to the FetchResults channel.
+	err = db.Batch(setCacheHeaders(r.Name, wf.URL, resp))
+	if err != nil {
+		errorLog.Printf("couldn't update cache headers for %q (%v)", wf.URL, err)
+	}
+
+	r.FetchResults <- FetchResult{URL: wf.URL, Feed: feed}
+}
+
+func (r *River) ProcessFeed(result FetchResult) {
+	feed := result.Feed
 	feedUrl := result.URL
 	newItems := 0
 
