@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/boltdb/bolt"
 	"log"
 	"os"
@@ -9,12 +10,17 @@ import (
 )
 
 var (
-	logger, errorLog *log.Logger
-	db               *bolt.DB
+	logger, errorLog   *log.Logger
+	db                 *bolt.DB
+	dbPath, configPath string
 )
 
 // Set up two loggers: logger for os.Stdout, and errorLog for error.log
 func init() {
+	flag.StringVar(&dbPath, "database", "feeds.db", "path to BoltDB database")
+	flag.StringVar(&configPath, "config", "config.toml", "path to TOML config")
+	flag.Parse()
+
 	logger = log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)
 
 	fp, err := os.Create("error.log")
@@ -23,7 +29,7 @@ func init() {
 	}
 	errorLog = log.New(fp, "", log.LstdFlags|log.Lmicroseconds)
 
-	db, err = bolt.Open("feeds.boltdb", 0644, nil)
+	db, err = bolt.Open(dbPath, 0644, nil)
 	if err != nil {
 		logger.Fatalln(err)
 	}
@@ -37,7 +43,7 @@ func cleanup() {
 func main() {
 	logger.Println("starting up")
 
-	config, err := loadConfig("config.toml")
+	config, err := loadConfig(configPath)
 	if err != nil {
 		logger.Fatalln(err)
 	}
