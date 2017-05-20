@@ -81,7 +81,6 @@ func (r *River) Run() {
 		case result := <-r.FetchResults:
 			r.ProcessFeed(result)
 		case <-ticker.C:
-			logger.Println("updating feeds")
 			go r.UpdateFeeds()
 		}
 	}

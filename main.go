@@ -35,6 +35,8 @@ func cleanup() {
 }
 
 func main() {
+	logger.Println("starting up")
+
 	config, err := loadConfig("config.toml")
 	if err != nil {
 		logger.Fatalln(err)
@@ -44,7 +46,7 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		logger.Println("cleaning up...")
+		logger.Println("caught signal, cleaning up")
 		cleanup()
 		logger.Println("shutting down")
 		os.Exit(1)
