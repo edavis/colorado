@@ -23,10 +23,8 @@ type River struct {
 	FetchResults     chan FetchResult
 	WebFeedChan      chan *WebFeed
 	Streams          []*WebFeed
-	Updates          []*UpdatedFeed
 	Seen             map[string]bool
 	UpdateInterval   time.Duration
-	Messages         []string
 	builds           uint64
 	counter          uint64 // Item id counter
 	httpClient       *http.Client
@@ -64,6 +62,12 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 		wf := WebFeed{URL: feed}
 		r.Streams = append(r.Streams, &wf)
 	}
+
+	if err = db.Update(createBucket(name)); err != nil {
+		errorLog.Println(err)
+		logger.Println(err)
+	}
+
 	return &r
 }
 
@@ -226,10 +230,9 @@ func (r *River) ProcessFeed(result FetchResult) {
 	}
 
 	if newItems > 0 {
-		r.Updates = append([]*UpdatedFeed{&feedUpdate}, r.Updates...)
-
-		if len(r.Updates) > maxFeedUpdates {
-			r.Updates = r.Updates[:maxFeedUpdates]
+		if err := db.Batch(updateRiver(r.Name, &feedUpdate)); err != nil {
+			errorLog.Println(err)
+			logger.Println(err)
 		}
 
 		logger.Printf("added %d new item(s) from %q to %s (counter = %d)", newItems, feedUrl, r.Name, r.GetCounter())
