@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/boltdb/bolt"
 	"net/http"
+	"strconv"
 )
 
 // createBucket creates the bucket if it does not exist.
@@ -105,5 +106,17 @@ func setCacheHeaders(name, url string, resp *http.Response) func(*bolt.Tx) error
 		err := b.Put([]byte("lastModified:"+url), []byte(lm))
 		err = b.Put([]byte("etag:"+url), []byte(e))
 		return err
+	}
+}
+
+func assignNextID(name string, update *UpdatedFeedItem) func(*bolt.Tx) error {
+	return func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(name))
+		seq, err := b.NextSequence()
+		if err != nil {
+			return err
+		}
+		update.Id = strconv.Itoa(int(seq))
+		return nil
 	}
 }

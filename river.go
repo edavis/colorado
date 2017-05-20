@@ -5,7 +5,6 @@ import (
 	"github.com/mmcdole/gofeed"
 	"github.com/satori/go.uuid"
 	"net/http"
-	"sync/atomic"
 	"time"
 )
 
@@ -23,7 +22,6 @@ type River struct {
 	Streams          []*WebFeed
 	UpdateInterval   time.Duration
 	builds           uint64
-	counter          uint64 // Item id counter
 	httpClient       *http.Client
 	whenStartedGMT   string // Track startup times
 	whenStartedLocal string
@@ -82,14 +80,6 @@ func (r *River) Run() {
 			go r.UpdateFeeds()
 		}
 	}
-}
-
-func (r River) GetCounter() uint64 {
-	return atomic.LoadUint64(&r.counter)
-}
-
-func (r *River) IncrementCounter() {
-	atomic.AddUint64(&r.counter, 1)
 }
 
 func (r *River) UpdateFeeds() {
@@ -204,14 +194,16 @@ func (r *River) ProcessFeed(result FetchResult) {
 			newItems += 1
 		}
 
-		r.IncrementCounter()
 		itemUpdate := UpdatedFeedItem{
 			Body:      extractBody(item),
-			Id:        fmt.Sprintf("%d", r.GetCounter()),
 			Link:      item.Link,
 			PermaLink: item.GUID,
 			PubDate:   sanitizeDate(item.Published),
 			Title:     makePlainText(item.Title),
+		}
+
+		if err := db.Update(assignNextID(r.Name, &itemUpdate)); err != nil {
+			errorLog.Printf("error assigning next ID: %v", err)
 		}
 
 		feedUpdate.Items = append([]*UpdatedFeedItem{&itemUpdate}, feedUpdate.Items...)
@@ -228,5 +220,5 @@ func (r *River) ProcessFeed(result FetchResult) {
 		}
 	}
 
-	logger.Printf("added %d new item(s) from %q to %s (counter = %d)", newItems, feedUrl, r.Name, r.GetCounter())
+	logger.Printf("added %d new item(s) from %q to %s", newItems, feedUrl, r.Name)
 }
