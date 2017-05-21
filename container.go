@@ -20,18 +20,7 @@ func NewRiverContainer(config *Config) *RiverContainer {
 	}
 
 	for _, obj := range config.River {
-		var interval string
-
-		switch {
-		case obj.Update != "":
-			interval = obj.Update
-		case config.Settings.Update != "":
-			interval = config.Settings.Update
-		default:
-			interval = "15m"
-		}
-
-		rc.Rivers[obj.Name] = NewRiver(obj.Name, obj.Feeds, interval, obj.Title, obj.Description)
+		rc.Rivers[obj.Name] = NewRiver(obj.Name, obj.Title, obj.Description, obj.Feeds)
 	}
 
 	return &rc
@@ -139,6 +128,10 @@ func (rc *RiverContainer) UpdateRivers() error {
 		for feed, _ := range river.Streams {
 			if _, ok := newFeeds[feed]; !ok {
 				logger.Printf("removing %q from %s river", feed, river.Name)
+				if stopped := river.Timers[feed].Stop(); !stopped {
+					logger.Printf("problem stopping timer for %q", feed)
+				}
+				delete(river.Timers, feed)
 				delete(river.Streams, feed)
 			}
 		}

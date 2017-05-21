@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/naoina/toml"
 	"os"
+	"time"
 )
 
 const (
@@ -15,18 +16,17 @@ const (
 	maxCharCount      = 280
 	maxItems          = 5
 	maxFeedUpdates    = 100
+	pollChange        = 0.1 // scale poll interval by this percentage
+	pollMin           = time.Duration(5 * time.Minute)
+	pollMax           = time.Duration(24 * time.Hour)
 )
 
 type Config struct {
-	Settings struct {
-		Update string
-	}
 	River []struct {
 		Name        string
 		Title       string
 		Description string
 		Feeds       []string
-		Update      string
 	}
 }
 

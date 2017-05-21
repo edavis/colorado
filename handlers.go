@@ -62,7 +62,6 @@ func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
 			"aggregator":       userAgent,
 			"aggregatorDocs":   "https://github.com/edavis/colorado",
 			"docs":             "http://riverjs.org/",
-			"ctBuilds":         fmt.Sprintf("%d", r.builds),
 			"whenGMT":          nowGMT(),
 			"whenLocal":        nowLocal(),
 			"whenStartedGMT":   r.whenStartedGMT,

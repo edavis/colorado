@@ -16,8 +16,8 @@ type River struct {
 	FetchResults     chan FetchResult
 	Updater          chan string
 	Streams          map[string]bool
-	UpdateInterval   time.Duration
-	builds           uint64
+	UpdateSchedule   map[string]time.Duration
+	Timers           map[string]*time.Timer
 	httpClient       *http.Client
 	whenStartedGMT   string // Track startup times
 	whenStartedLocal string
@@ -29,7 +29,7 @@ type FetchResult struct {
 	Feed *gofeed.Feed
 }
 
-func NewRiver(name string, feeds []string, updateInterval, title, description string) *River {
+func NewRiver(name, title, description string, feeds []string) *River {
 	r := River{
 		Name:             name,
 		Title:            title,
@@ -37,6 +37,8 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 		FetchResults:     make(chan FetchResult),
 		Updater:          make(chan string),
 		Streams:          make(map[string]bool),
+		UpdateSchedule:   make(map[string]time.Duration),
+		Timers:           make(map[string]*time.Timer),
 		whenStartedGMT:   nowGMT(),
 		whenStartedLocal: nowLocal(),
 		httpClient: &http.Client{
@@ -44,18 +46,12 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 		},
 	}
 
-	duration, err := time.ParseDuration(updateInterval)
-	if err != nil {
-		errorLog.Printf("the duration %q is invalid, using default of 15 minutes", updateInterval)
-		duration = 15 * time.Minute
-	}
-	r.UpdateInterval = duration
-
 	for _, feed := range feeds {
 		r.Streams[feed] = true
+		r.UpdateSchedule[feed] = time.Duration(1 * time.Hour) // All feeds start with a 1h poll interval
 	}
 
-	if err = db.Update(createBucket(name)); err != nil {
+	if err := db.Update(createBucket(name)); err != nil {
 		errorLog.Printf("couldn't create bucket %s (%v)", name, err)
 		logger.Println("couldn't create bucket %s (%v)", name, err)
 	}
@@ -64,30 +60,19 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 }
 
 func (r *River) Run() {
-	// start the worker and initial feed check
 	go r.FetchWorker()
 
 	if !quickStart {
-		go r.UpdateFeeds()
+		go func() {
+			for url, _ := range r.Streams {
+				r.Updater <- url
+			}
+		}()
 	}
-
-	ticker := time.NewTicker(r.UpdateInterval)
 
 	for {
-		select {
-		case result := <-r.FetchResults:
-			r.ProcessFeed(result)
-		case <-ticker.C:
-			go r.UpdateFeeds()
-		}
+		r.ProcessFeed(<-r.FetchResults)
 	}
-}
-
-func (r *River) UpdateFeeds() {
-	for url, _ := range r.Streams {
-		r.Updater <- url
-	}
-	r.builds += 1
 }
 
 func (r *River) FetchWorker() {
@@ -119,7 +104,7 @@ func (r *River) Fetch(url string) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusNotModified {
-		logger.Printf("added 0 new item(s) from %q to %s (HTTP 304)", url, r.Name)
+		r.FetchResults <- FetchResult{URL: url, Feed: nil}
 		return
 	}
 
@@ -144,6 +129,13 @@ func (r *River) ProcessFeed(result FetchResult) {
 	feed := result.Feed
 	feedUrl := result.URL
 	newItems := 0
+
+	// feed is nil if Fetch received HTTP 304
+	if feed == nil {
+		nextPoll := r.updatePollInterval(feedUrl, newItems)
+		logger.Printf("added 0 new item(s) from %q to %s (HTTP 304, next update = %v)", feedUrl, r.Name, nextPoll)
+		return
+	}
 
 	generateFingerprint := func(url string, item *gofeed.Item) string {
 		var guid string
@@ -221,5 +213,32 @@ func (r *River) ProcessFeed(result FetchResult) {
 		}
 	}
 
-	logger.Printf("added %d new item(s) from %q to %s", newItems, feedUrl, r.Name)
+	nextPoll := r.updatePollInterval(feedUrl, newItems)
+	logger.Printf("added %d new item(s) from %q to %s (next update = %v)", newItems, feedUrl, r.Name, nextPoll)
+}
+
+func (r *River) updatePollInterval(url string, newItems int) time.Duration {
+	current := r.UpdateSchedule[url]
+
+	chg := pollChange
+	if newItems > 0 {
+		chg = -chg
+	}
+
+	delta := current.Seconds() * chg
+	newPoll := time.Duration(current.Seconds()+delta) * time.Second
+
+	switch {
+	case newPoll < pollMin:
+		newPoll = pollMin
+	case newPoll > pollMax:
+		newPoll = pollMax
+	}
+
+	r.UpdateSchedule[url] = newPoll
+	r.Timers[url] = time.AfterFunc(newPoll, func() {
+		r.Updater <- url
+	})
+
+	return newPoll
 }
