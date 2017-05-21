@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/boltdb/bolt"
+	"github.com/fsnotify/fsnotify"
 	"log"
 	"os"
 	"os/signal"
@@ -13,6 +14,7 @@ var (
 	logger, errorLog   *log.Logger
 	db                 *bolt.DB
 	dbPath, configPath string
+	watcher            *fsnotify.Watcher
 )
 
 // Set up two loggers: logger for os.Stdout, and errorLog for error.log
@@ -33,10 +35,18 @@ func init() {
 	if err != nil {
 		logger.Fatalln(err)
 	}
+
+	watcher, err = fsnotify.NewWatcher()
+	if err != nil {
+		logger.Fatalln(err)
+	}
 }
 
 // cleanup closes the bolt database.
 func cleanup() {
+	if err := watcher.Close(); err != nil {
+		logger.Printf("problem closing watcher: %v", err)
+	}
 	db.Close()
 }
 
@@ -45,6 +55,10 @@ func main() {
 
 	config, err := loadConfig(configPath)
 	if err != nil {
+		logger.Fatalln(err)
+	}
+
+	if err = watcher.Add(configPath); err != nil {
 		logger.Fatalln(err)
 	}
 

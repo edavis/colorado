@@ -106,12 +106,8 @@ func (r *River) serveFeedsOpml(w http.ResponseWriter, req *http.Request) {
 		Title:   r.Name + " feeds",
 		Docs:    opmlDocs,
 	}
-	for _, webFeed := range r.Streams {
-		outline := Outline{
-			Text: webFeed.URL,
-			URL:  webFeed.URL,
-			Type: "rss",
-		}
+	for url, _ := range r.Streams {
+		outline := Outline{Text: url, URL: url, Type: "rss"}
 		opml.Outlines = append(opml.Outlines, outline)
 	}
 

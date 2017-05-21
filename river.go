@@ -8,18 +8,14 @@ import (
 	"time"
 )
 
-type WebFeed struct {
-	URL string
-}
-
 // River holds the main app logic.
 type River struct {
 	Name             string
 	Title            string
 	Description      string
 	FetchResults     chan FetchResult
-	WebFeedChan      chan *WebFeed
-	Streams          []*WebFeed
+	Updater          chan string
+	Streams          map[string]bool
 	UpdateInterval   time.Duration
 	builds           uint64
 	httpClient       *http.Client
@@ -39,7 +35,8 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 		Title:            title,
 		Description:      description,
 		FetchResults:     make(chan FetchResult),
-		WebFeedChan:      make(chan *WebFeed),
+		Updater:          make(chan string),
+		Streams:          make(map[string]bool),
 		whenStartedGMT:   nowGMT(),
 		whenStartedLocal: nowLocal(),
 		httpClient: &http.Client{
@@ -55,13 +52,12 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 	r.UpdateInterval = duration
 
 	for _, feed := range feeds {
-		wf := WebFeed{URL: feed}
-		r.Streams = append(r.Streams, &wf)
+		r.Streams[feed] = true
 	}
 
 	if err = db.Update(createBucket(name)); err != nil {
-		errorLog.Println(err)
-		logger.Println(err)
+		errorLog.Printf("couldn't create bucket %s (%v)", name, err)
+		logger.Println("couldn't create bucket %s (%v)", name, err)
 	}
 
 	return &r
@@ -85,60 +81,60 @@ func (r *River) Run() {
 }
 
 func (r *River) UpdateFeeds() {
-	for _, wf := range r.Streams {
-		r.WebFeedChan <- wf
+	for url, _ := range r.Streams {
+		r.Updater <- url
 	}
 	r.builds += 1
 }
 
 func (r *River) FetchWorker() {
 	for {
-		r.Fetch(<-r.WebFeedChan)
+		r.Fetch(<-r.Updater)
 	}
 }
 
-func (r *River) Fetch(wf *WebFeed) {
-	req, err := http.NewRequest("GET", wf.URL, nil)
+func (r *River) Fetch(url string) {
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		errorLog.Printf("error creating request for %q (%v)", wf.URL, err)
+		errorLog.Printf("error creating request for %q (%v)", url, err)
 		return
 	}
 
 	req.Header.Add("User-Agent", userAgent)
 	req.Header.Add("From", "https://github.com/edavis/colorado")
 
-	err = db.View(getCacheHeaders(r.Name, wf.URL, req))
+	err = db.View(getCacheHeaders(r.Name, url, req))
 	if err != nil {
-		errorLog.Printf("couldn't set cache headers on request for %q (%v)", wf.URL, err)
+		errorLog.Printf("couldn't set cache headers on request for %q (%v)", url, err)
 	}
 
 	resp, err := r.httpClient.Do(req)
 	if err != nil {
-		errorLog.Printf("error requesting %q (%v)", wf.URL, err)
+		errorLog.Printf("error requesting %q (%v)", url, err)
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusNotModified {
-		logger.Printf("added 0 new item(s) from %q to %s (HTTP 304)", wf.URL, r.Name)
+		logger.Printf("added 0 new item(s) from %q to %s (HTTP 304)", url, r.Name)
 		return
 	}
 
 	parser := gofeed.NewParser()
 	feed, err := parser.Parse(resp.Body)
 	if err != nil {
-		errorLog.Printf("error parsing %q (%v)", wf.URL, err)
+		errorLog.Printf("error parsing %q (%v)", url, err)
 		return
 	}
 
 	// If made it this far, the fetch was a success. Update the cache
 	// headers and send a FetchResult to the FetchResults channel.
-	err = db.Batch(setCacheHeaders(r.Name, wf.URL, resp))
+	err = db.Batch(setCacheHeaders(r.Name, url, resp))
 	if err != nil {
-		errorLog.Printf("couldn't update cache headers for %q (%v)", wf.URL, err)
+		errorLog.Printf("couldn't update cache headers for %q (%v)", url, err)
 	}
 
-	r.FetchResults <- FetchResult{URL: wf.URL, Feed: feed}
+	r.FetchResults <- FetchResult{URL: url, Feed: feed}
 }
 
 func (r *River) ProcessFeed(result FetchResult) {
@@ -187,7 +183,7 @@ func (r *River) ProcessFeed(result FetchResult) {
 
 		var seen bool
 		if err := db.Batch(checkFingerprint(r.Name, fingerprint, &seen)); err != nil {
-			errorLog.Println(err)
+			errorLog.Println("couldn't check if fingerprint has been seen before (%v)", err)
 		}
 
 		if seen {
@@ -205,7 +201,7 @@ func (r *River) ProcessFeed(result FetchResult) {
 		}
 
 		if err := db.Update(assignNextID(r.Name, &itemUpdate)); err != nil {
-			errorLog.Printf("error assigning next ID: %v", err)
+			errorLog.Printf("error assigning next ID (%v)", err)
 		}
 
 		feedUpdate.Items = append([]*UpdatedFeedItem{&itemUpdate}, feedUpdate.Items...)
@@ -217,8 +213,8 @@ func (r *River) ProcessFeed(result FetchResult) {
 
 	if newItems > 0 {
 		if err := db.Batch(updateRiver(r.Name, &feedUpdate)); err != nil {
-			errorLog.Println(err)
-			logger.Println(err)
+			errorLog.Printf("couldn't add new items to river %s (%v)", r.Name, err)
+			logger.Printf("couldn't add new items to river %s (%v)", r.Name, err)
 		}
 	}
 

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/fsnotify/fsnotify"
 	"net/http"
 	"os"
 )
@@ -45,7 +46,7 @@ func (rc *RiverContainer) Run() {
 
 		fp, err := os.Open("error.log")
 		if err != nil {
-			errorLog.Println(err)
+			errorLog.Printf("couldn't open error.log (%v)", err)
 		}
 		defer fp.Close()
 
@@ -63,7 +64,64 @@ func (rc *RiverContainer) Run() {
 		go river.Run()
 	}
 
+	go rc.Monitor()
+
 	if err := http.ListenAndServe(":9000", mux); err != nil {
 		logger.Fatalln(err)
 	}
+}
+
+// Monitor responds to watcher events and errors.
+func (rc *RiverContainer) Monitor() {
+	for {
+		select {
+		case event := <-watcher.Events:
+			if event.Op == fsnotify.Write {
+				logger.Println("config file updated, adding/removing feeds as needed")
+				if err := rc.UpdateRivers(); err != nil {
+					logger.Printf("error updating rivers (%v)", err)
+				}
+			}
+		case err := <-watcher.Errors:
+			if err != nil {
+				errorLog.Printf("received watcher error (%v)", err)
+			}
+		}
+	}
+}
+
+// UpdateRivers is called when the config file is updated.
+func (rc *RiverContainer) UpdateRivers() error {
+	config, err := loadConfig(configPath)
+	if err != nil {
+		logger.Fatalln(err)
+		return err
+	}
+
+	for _, obj := range config.River {
+		newFeeds := make(map[string]bool)
+		river := rc.Rivers[obj.Name]
+
+		// Add any new feeds to river.Streams
+		for _, feed := range obj.Feeds {
+			newFeeds[feed] = true
+
+			if _, ok := river.Streams[feed]; !ok {
+				logger.Printf("adding %q to %s river", feed, river.Name)
+				river.Streams[feed] = true
+				river.Updater <- feed
+			}
+		}
+
+		// Remove any feeds in river.Streams that are no longer in the config file
+		for feed, _ := range river.Streams {
+			if _, ok := newFeeds[feed]; !ok {
+				logger.Printf("removing %q from %s river", feed, river.Name)
+				delete(river.Streams, feed)
+			}
+		}
+
+	}
+
+	return nil
 }
