@@ -46,9 +46,10 @@ type OPML struct {
 }
 
 type Outline struct {
-	Text string `xml:"text,attr"`
-	Type string `xml:"type,attr"`
-	URL  string `xml:"xmlUrl,attr"`
+	Text     string `xml:"text,attr"`
+	Type     string `xml:"type,attr"`
+	URL      string `xml:"xmlUrl,attr"`
+	Interval string `xml:"pollInterval,attr"`
 }
 
 func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
@@ -106,7 +107,8 @@ func (r *River) serveFeedsOpml(w http.ResponseWriter, req *http.Request) {
 		Docs:    opmlDocs,
 	}
 	for url, _ := range r.Streams {
-		outline := Outline{Text: url, URL: url, Type: "rss"}
+		interval := r.UpdateSchedule[url].String()
+		outline := Outline{Text: url, URL: url, Interval: interval, Type: "rss"}
 		opml.Outlines = append(opml.Outlines, outline)
 	}
 
