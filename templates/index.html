@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Rivers of News</title>
+	</head>
+	<body>
+		<ul>
+		{{- range $_, $river := .Rivers }}
+			<li><a href="/{{ $river.Name }}/" target="_blank">{{ $river.Title }} ({{ len $river.Streams }} feeds)</a></li>
+		{{- end }}
+		</ul>
+	</body>
+</html>

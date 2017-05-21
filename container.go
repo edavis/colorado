@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"html/template"
 	"net/http"
 	"os"
+	"path"
 )
 
 type RiverContainer struct {
@@ -54,6 +56,13 @@ func (rc *RiverContainer) Run() {
 		reader.WriteTo(w)
 	})
 
+	// Set up the index handler
+	mux.Handle("/", rc)
+
+	if quickStart {
+		logger.Println("quick start requested, skipping initial feed check")
+	}
+
 	for name, river := range rc.Rivers {
 		// register HTTP handlers
 		mux.HandleFunc(fmt.Sprintf("/%s/", name), river.serveIndex)
@@ -68,6 +77,19 @@ func (rc *RiverContainer) Run() {
 
 	if err := http.ListenAndServe(":9000", mux); err != nil {
 		logger.Fatalln(err)
+	}
+}
+
+func (rc *RiverContainer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	t, err := template.ParseFiles(path.Join("templates", "index.html"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	if err := t.Execute(w, rc); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 

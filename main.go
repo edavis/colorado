@@ -14,6 +14,7 @@ var (
 	logger, errorLog   *log.Logger
 	db                 *bolt.DB
 	dbPath, configPath string
+	quickStart         bool
 	watcher            *fsnotify.Watcher
 )
 
@@ -21,6 +22,7 @@ var (
 func init() {
 	flag.StringVar(&dbPath, "database", "feeds.db", "path to BoltDB database")
 	flag.StringVar(&configPath, "config", "config.toml", "path to TOML config")
+	flag.BoolVar(&quickStart, "quick", false, "don't do an initial feed update")
 	flag.Parse()
 
 	logger = log.New(os.Stdout, "", log.LstdFlags|log.Lmicroseconds)

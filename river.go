@@ -66,7 +66,10 @@ func NewRiver(name string, feeds []string, updateInterval, title, description st
 func (r *River) Run() {
 	// start the worker and initial feed check
 	go r.FetchWorker()
-	go r.UpdateFeeds()
+
+	if !quickStart {
+		go r.UpdateFeeds()
+	}
 
 	ticker := time.NewTicker(r.UpdateInterval)
 
