@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/xml"
 	"github.com/microcosm-cc/bluemonday"
+	"golang.org/x/net/html/charset"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -69,4 +72,25 @@ func truncateText(s string) string {
 	default:
 		return s[:idx] + "&nbsp;\u2026"
 	}
+}
+
+func extractFeedsFromOPML(url string) ([]string, error) {
+	logger.Printf("getting feeds from OPML at %s", url)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var opml OPML
+	dec := xml.NewDecoder(resp.Body)
+	dec.CharsetReader = charset.NewReaderLabel
+	if err := dec.Decode(&opml); err != nil {
+		return nil, err
+	}
+
+	var feeds = opml.urls()
+	logger.Printf("got %d feeds from %s", len(feeds), url)
+	return feeds, nil
 }

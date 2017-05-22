@@ -20,7 +20,22 @@ func NewRiverContainer(config *Config) *RiverContainer {
 	}
 
 	for _, obj := range config.River {
-		rc.Rivers[obj.Name] = NewRiver(obj.Name, obj.Title, obj.Description, obj.Feeds)
+		var (
+			feeds []string
+			err   error
+		)
+
+		switch {
+		case len(obj.Feeds) > 0:
+			feeds = obj.Feeds
+		case obj.OPML != "":
+			feeds, err = extractFeedsFromOPML(obj.OPML)
+			if err != nil {
+				logger.Printf("couldn't get feeds from %s (%v)", obj.OPML, err)
+			}
+		}
+
+		rc.Rivers[obj.Name] = NewRiver(obj.Name, obj.Title, obj.Description, feeds)
 	}
 
 	return &rc
@@ -110,6 +125,10 @@ func (rc *RiverContainer) UpdateRivers() error {
 	}
 
 	for _, obj := range config.River {
+		if len(obj.Feeds) == 0 {
+			continue
+		}
+
 		newFeeds := make(map[string]bool)
 		river := rc.Rivers[obj.Name]
 

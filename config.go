@@ -27,6 +27,7 @@ type Config struct {
 		Title       string
 		Description string
 		Feeds       []string
+		OPML        string
 	}
 }
 

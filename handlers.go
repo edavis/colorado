@@ -37,21 +37,6 @@ type UpdatedFeedItem struct {
 	Id        string `json:"id"`
 }
 
-type OPML struct {
-	XMLName  xml.Name  `xml:"opml"`
-	Version  string    `xml:"version,attr"`
-	Title    string    `xml:"head>title"`
-	Docs     string    `xml:"head>docs"`
-	Outlines []Outline `xml:"body>outline"`
-}
-
-type Outline struct {
-	Text     string `xml:"text,attr"`
-	Type     string `xml:"type,attr"`
-	URL      string `xml:"xmlUrl,attr"`
-	Interval string `xml:"pollInterval,attr"`
-}
-
 func (r *River) serveRiver(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
