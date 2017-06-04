@@ -14,7 +14,6 @@ type Outline struct {
 	Text     string    `xml:"text,attr"`
 	Type     string    `xml:"type,attr"`
 	URL      string    `xml:"xmlUrl,attr"`
-	Interval string    `xml:"pollInterval,attr"`
 	Outlines []Outline `xml:"outline"`
 }
 

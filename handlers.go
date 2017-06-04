@@ -92,8 +92,7 @@ func (r *River) serveFeedsOpml(w http.ResponseWriter, req *http.Request) {
 		Docs:    opmlDocs,
 	}
 	for url, _ := range r.Streams {
-		interval := r.UpdateSchedule[url].String()
-		outline := Outline{Text: url, URL: url, Interval: interval, Type: "rss"}
+		outline := Outline{Text: url, URL: url, Type: "rss"}
 		opml.Outlines = append(opml.Outlines, outline)
 	}
 
