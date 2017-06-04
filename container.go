@@ -139,6 +139,7 @@ func (rc *RiverContainer) UpdateRivers() error {
 			if _, ok := river.Streams[feed]; !ok {
 				logger.Printf("adding %q to %s river", feed, river.Name)
 				river.Streams[feed] = true
+				river.UpdateSchedule[feed] = pollDefault
 				river.Updater <- feed
 			}
 		}

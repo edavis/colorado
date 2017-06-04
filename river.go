@@ -48,7 +48,7 @@ func NewRiver(name, title, description string, feeds []string) *River {
 
 	for _, feed := range feeds {
 		r.Streams[feed] = true
-		r.UpdateSchedule[feed] = time.Duration(1 * time.Hour) // All feeds start with a 1h poll interval
+		r.UpdateSchedule[feed] = pollDefault
 	}
 
 	if err := db.Update(createBucket(name)); err != nil {

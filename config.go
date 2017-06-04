@@ -17,8 +17,9 @@ const (
 	maxItems          = 5
 	maxFeedUpdates    = 100
 	pollChange        = 0.1 // scale poll interval by this percentage
+	pollDefault       = time.Duration(1 * time.Hour)
 	pollMin           = time.Duration(5 * time.Minute)
-	pollMax           = time.Duration(24 * time.Hour)
+	pollMax           = time.Duration(1 * time.Hour)
 )
 
 type Config struct {
